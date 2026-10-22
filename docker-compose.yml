@@ -1,0 +1,20 @@
+services:
+  backend:
+    build: ./backend
+    container_name: iceberg-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: iceberg-web
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_TARGET=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped

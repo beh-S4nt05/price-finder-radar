@@ -1,0 +1,48 @@
+# Python & Backend
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local SQLite Databases (keep folder via .gitkeep)
+backend/data/*.db
+backend/data/*.db-journal
+backend/data/*.db-wal
+backend/data/*.sqlite*
+
+# Node & Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.vite/
+.npm/
+
+# Browsers & Local Caches
+.cache/
+ms-playwright/
+playwright-report/
+test-results/
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# Archives & Static Git Mirror
+*.zip
+*.bundle
+backend/static_git/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.local/
+.sudo_as_admin_successful
+*.tsbuildinfo
