@@ -6,6 +6,22 @@ Sistema full-stack de **comparação de preços multi-loja em tempo real**, **de
 
 ---
 
+
+## Google-first e verificação obrigatória
+
+A pesquisa principal do frontend usa `POST /api/search/google-verified` e **não usa Bing ou outros buscadores como fallback automático**. Configure no backend:
+
+```env
+GOOGLE_SEARCH_API_KEY=sua_chave_da_api
+GOOGLE_SEARCH_ENGINE_ID=identificador_do_mecanismo_programavel
+```
+
+É necessário configurar um Google Programmable Search Engine com a abrangência desejada e habilitar a API correspondente no Google Cloud. A disponibilidade, cotas e preços são definidos pelo Google. Sem credenciais, a API retorna `discovery_error` e **nenhuma oferta fictícia**.
+
+O Google é utilizado apenas para descoberta. Cada URL encontrada é inspecionada diretamente, e apenas anúncios com preço positivo extraído do site e URL compatível com a fonte entram em `offers`. Páginas inacessíveis ou sem preço confirmado aparecem em `pending` com motivo. O preço do snippet do Google nunca substitui o preço da loja. Uma oferta validada significa apenas confirmação de dados da página, **não** autenticação de vendedor, ausência de fraude, estoque confirmado no checkout ou preço garantido.
+
+O endpoint legado `/api/search` permanece disponível para compatibilidade com os adaptadores de lojas, mas não é chamado pelo fluxo principal do frontend. O adaptador Bing foi retirado da composição ativa. A verificação de vendedores e a navegação de checkout permanecem fora do escopo deste PR.
+
 ## Como Clonar e Inicializar o Projeto
 
 ### Passo 1 — Clonar o Repositório
