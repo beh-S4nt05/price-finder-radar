@@ -19,7 +19,6 @@ from src.infrastructure.persistence.sqlite_db import (
     SqliteWatchlistRepository,
 )
 from src.infrastructure.scraping.amazon_dork_scraper import AmazonDirectDorkScraper
-from src.infrastructure.scraping.bing_shop_scraper import BingShoppingMetasearchScraper
 from src.infrastructure.scraping.browser_manager import PlaywrightBrowserManager
 from src.infrastructure.scraping.buscape_scraper import (
     BuscapeCrossStoreScraper,
@@ -61,7 +60,6 @@ class AppContainer:
             KaBuMOfficialScraper(),
             KalungaOfficialScraper(),
             CopaferEletricaScraper(),
-            BingShoppingMetasearchScraper(),
         ]
         self.url_inspector = DirectUrlBrowserInspector(self.browser_manager)
 
