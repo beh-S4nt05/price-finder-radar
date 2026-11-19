@@ -84,14 +84,16 @@ async def verified_google_search(query: str, inspector, comparator, limit: int =
                 if not isinstance(found, list) or not found:
                     reason = "Preço e produto não confirmados diretamente na página"
                 else:
+                    accepted = 0
                     for offer in found:
                         # Only direct-source offers with valid positive price and public URL.
                         if (offer.pix_price.as_float > 0 and public_url(offer.url)
                                 and urlsplit(offer.url).hostname == urlsplit(url).hostname):
                             raw.append(offer)
-                    if not any(o.url for o in raw if urlsplit(o.url).hostname == urlsplit(url).hostname):
+                            accepted += 1
+                    if accepted == 0:
                         reason = "Página sem oferta verificável"
-            except (Exception) as exc:
+            except Exception as exc:
                 reason = f"Falha na inspeção: {type(exc).__name__}"
         if reason:
             pending.append({**candidate, "status": "pending", "reason": reason})
