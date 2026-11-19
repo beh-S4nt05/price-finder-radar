@@ -7,20 +7,18 @@ Sistema full-stack de **comparação de preços multi-loja em tempo real**, **de
 ---
 
 
-## Google-first e verificação obrigatória
+## Google-first via Playwright Chromium
 
-A pesquisa principal do frontend usa `POST /api/search/google-verified` e **não usa Bing ou outros buscadores como fallback automático**. Configure no backend:
+O frontend usa `POST /api/search/google-verified`. A descoberta navega no **Google Search usando Playwright Chromium**, sem API key e sem fallback automático para Bing ou outros buscadores. Instale o navegador no ambiente do backend:
 
-```env
-GOOGLE_SEARCH_API_KEY=sua_chave_da_api
-GOOGLE_SEARCH_ENGINE_ID=identificador_do_mecanismo_programavel
+```bash
+python -m playwright install chromium
 ```
 
-É necessário configurar um Google Programmable Search Engine com a abrangência desejada e habilitar a API correspondente no Google Cloud. A disponibilidade, cotas e preços são definidos pelo Google. Sem credenciais, a API retorna `discovery_error` e **nenhuma oferta fictícia**.
+Cada link descoberto é aberto pelo inspetor de URLs e só entra em `offers` se o site apresentar uma oferta extraível com preço positivo e URL compatível. URLs não verificadas aparecem em `pending`. O valor do Google não substitui o preço da loja. Se o Google bloquear a automação, exigir CAPTCHA ou mudar o HTML, a busca informa a limitação; **não contorna desafios humanos**. A navegação automatizada deve respeitar termos e limites de acesso dos sites.
 
-O Google é utilizado apenas para descoberta. Cada URL encontrada é inspecionada diretamente, e apenas anúncios com preço positivo extraído do site e URL compatível com a fonte entram em `offers`. Páginas inacessíveis ou sem preço confirmado aparecem em `pending` com motivo. O preço do snippet do Google nunca substitui o preço da loja. Uma oferta validada significa apenas confirmação de dados da página, **não** autenticação de vendedor, ausência de fraude, estoque confirmado no checkout ou preço garantido.
+A confirmação de preço na página não é certificação de vendedor, ausência de fraude, confirmação de frete ou disponibilidade no checkout. O endpoint legado `/api/search` permanece por compatibilidade, mas não é usado pelo fluxo principal.
 
-O endpoint legado `/api/search` permanece disponível para compatibilidade com os adaptadores de lojas, mas não é chamado pelo fluxo principal do frontend. O adaptador Bing foi retirado da composição ativa. A verificação de vendedores e a navegação de checkout permanecem fora do escopo deste PR.
 
 ## Como Clonar e Inicializar o Projeto
 
