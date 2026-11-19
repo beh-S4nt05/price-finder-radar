@@ -28,38 +28,37 @@ def test_public_url():
 
 
 @pytest.mark.asyncio
-async def test_missing_google_configuration(monkeypatch):
-    monkeypatch.delenv("GOOGLE_SEARCH_API_KEY",raising=False)
-    monkeypatch.delenv("GOOGLE_SEARCH_ENGINE_ID",raising=False)
+async def test_browser_not_configured():
     found,error=await mod.google_discover("notebook")
-    assert found==[] and "não configurado" in error
+    assert found==[] and "Chromium" in error
 
 
 @pytest.mark.asyncio
-async def test_google_only_api_request(monkeypatch):
-    monkeypatch.setenv("GOOGLE_SEARCH_API_KEY","test")
-    monkeypatch.setenv("GOOGLE_SEARCH_ENGINE_ID","cx")
-    calls=[]
-    class Response:
-        def raise_for_status(self): pass
-        def json(self): return {"items":[{"title":"A","link":"https://store.example/item"}]}
-    class Client:
-        def __init__(self,**kwargs): pass
-        async def __aenter__(self): return self
-        async def __aexit__(self,*args): pass
-        async def get(self,url,params):
-            calls.append((url,params))
-            return Response()
-    monkeypatch.setattr(mod.httpx,"AsyncClient",Client)
-    found,error=await mod.google_discover("notebook")
+async def test_google_chromium_discovery():
+    browser=AsyncMock()
+    browser.render_page_html.return_value=(
+        "https://www.google.com/search?q=notebook",
+        '<html><a href="https://store.example/item"><h3>Notebook real</h3></a></html>',
+    )
+    found,error=await mod.google_discover("notebook",browser_manager=browser)
     assert error is None and len(found)==1
-    assert calls[0][0]=="https://www.googleapis.com/customsearch/v1"
-    assert calls[0][1]["q"]=="notebook"
+    assert found[0]["url"]=="https://store.example/item"
+    assert browser.render_page_html.await_args.args[0].startswith("https://www.google.com/search?")
+
+
+@pytest.mark.asyncio
+async def test_google_challenge_not_bypassed():
+    browser=AsyncMock()
+    browser.render_page_html.return_value=(
+        "https://www.google.com/search?q=notebook", "<p>unusual traffic</p>"
+    )
+    found,error=await mod.google_discover("notebook",browser_manager=browser)
+    assert found==[] and "verificação humana" in error
 
 
 @pytest.mark.asyncio
 async def test_verified_and_pending_separation(monkeypatch):
-    async def discover(query,limit):
+    async def discover(query,limit,browser_manager=None):
         return [
             {"title":"Real","url":"https://store.example/item","snippet":"R$ 90"},
             {"title":"No price","url":"https://empty.example/item","snippet":"R$ 10"},
