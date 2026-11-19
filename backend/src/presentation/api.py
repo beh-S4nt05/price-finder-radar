@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from src.application.google_verified_search import verified_google_search
 from src.domain.entities.alert_config import AlertChannelConfig, DealNotificationPayload
 from src.domain.entities.watchlist_item import WatchlistItem
 from src.domain.value_objects.search_criteria import (
@@ -80,6 +81,14 @@ async def preview_dorks(query: str, category: str = "all"):
     )
     dorks = container.dork_builder.build_dorks(query, cat)
     return {"query": query, "dorks": [asdict(d) for d in dorks]}
+
+
+@app.post("/api/search/google-verified")
+async def google_verified_search(req: SearchRequestDTO):
+    return await verified_google_search(
+        req.query, container.url_inspector, container.comparator_service,
+        limit=min(req.max_results_per_engine, 10),
+    )
 
 
 @app.post("/api/search")
