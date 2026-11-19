@@ -88,6 +88,7 @@ async def google_verified_search(req: SearchRequestDTO):
     return await verified_google_search(
         req.query, container.url_inspector, container.comparator_service,
         limit=min(req.max_results_per_engine, 10),
+        browser_manager=container.browser_manager,
     )
 
 
