@@ -66,6 +66,8 @@ const DashboardContent: React.FC = () => {
   // Live Results State
   const [loading, setLoading] = useState(false);
   const [offers, setOffers] = useState<ProductOfferDTO[]>([]);
+  const [pendingOffers, setPendingOffers] = useState<Array<{title: string; url: string; reason: string}>>([]);
+  const [discoveryError, setDiscoveryError] = useState<string | null>(null);
   const [summary, setSummary] = useState<MarketSummaryDTO | null>(null);
   const [telemetry, setTelemetry] = useState<EngineTelemetryDTO[]>([]);
   const [dorks, setDorks] = useState<AdvancedDorkDTO[]>([]);
@@ -116,6 +118,8 @@ const DashboardContent: React.FC = () => {
         only_national_stores: onlyNational,
       });
       setOffers(res.offers);
+      setPendingOffers(res.pending);
+      setDiscoveryError(res.discovery_error);
       setSummary(res.summary);
       setTelemetry(res.telemetry);
       setDorks(res.dorks);
@@ -227,7 +231,10 @@ const DashboardContent: React.FC = () => {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
         {activeTab === 'search' && (
           <>
+            {pendingOffers.length > 0 && <section className="rounded-xl border border-amber-500/30 p-4 space-y-3"><h3 className="font-semibold">Ofertas pendentes de verificação ({pendingOffers.length})</h3>{pendingOffers.map((item, index) => <div key={item.url + index} className="text-sm border-t border-slate-200 dark:border-slate-700 pt-2"><a href={item.url} target="_blank" rel="noopener noreferrer" className="underline break-all">{item.title || item.url}</a><p className="text-amber-700 dark:text-amber-300">{item.reason}</p></div>)}</section>}
+            {discoveryError && <p role="alert" className="text-sm text-amber-700 dark:text-amber-300">{discoveryError}</p>}
             {/* Search Command Surface */}
+            <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 px-4 py-3 text-sm text-slate-700 dark:text-slate-200">Google prioritário e exclusivo para descoberta. Somente ofertas conferidas diretamente na loja aparecem como resultados. Sites não confirmados ficam separados abaixo.</div>
             <section className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#0D1424] border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-4">
               <form
                 onSubmit={(e) => {
