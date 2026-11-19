@@ -6,6 +6,20 @@ Sistema full-stack de **comparação de preços multi-loja em tempo real**, **de
 
 ---
 
+
+## Google-first via Playwright Chromium
+
+O frontend usa `POST /api/search/google-verified`. A descoberta navega no **Google Search usando Playwright Chromium**, sem API key e sem fallback automático para Bing ou outros buscadores. Instale o navegador no ambiente do backend:
+
+```bash
+python -m playwright install chromium
+```
+
+Cada link descoberto é aberto pelo inspetor de URLs e só entra em `offers` se o site apresentar uma oferta extraível com preço positivo e URL compatível. URLs não verificadas aparecem em `pending`. O valor do Google não substitui o preço da loja. Se o Google bloquear a automação, exigir CAPTCHA ou mudar o HTML, a busca informa a limitação; **não contorna desafios humanos**. A navegação automatizada deve respeitar termos e limites de acesso dos sites.
+
+A confirmação de preço na página não é certificação de vendedor, ausência de fraude, confirmação de frete ou disponibilidade no checkout. O endpoint legado `/api/search` permanece por compatibilidade, mas não é usado pelo fluxo principal.
+
+
 ## Como Clonar e Inicializar o Projeto
 
 ### Passo 1 — Clonar o Repositório

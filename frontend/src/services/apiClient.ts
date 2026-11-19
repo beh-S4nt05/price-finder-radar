@@ -46,8 +46,8 @@ class PriceRadarApiService {
     return this.request('/api/health');
   }
 
-  async searchOffers(payload: SearchPayload): Promise<SearchResponseDTO> {
-    return this.request('/api/search', {
+  async searchOffers(payload: SearchPayload): Promise<SearchResponseDTO & { pending: Array<{title: string; url: string; reason: string}>; discovery_error: string | null }> {
+    return this.request('/api/search/google-verified', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
