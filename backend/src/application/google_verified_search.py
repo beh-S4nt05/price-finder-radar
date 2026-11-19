@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from src.domain.value_objects.search_criteria import SearchCriteria
+from dataclasses import asdict
 from src.presentation.schemas import serialize_offer
 
 
@@ -104,9 +105,7 @@ async def verified_google_search(query: str, inspector, comparator, limit: int =
         "discovery_error": discovery_error,
         "offers": [serialize_offer(o) for o in ranked],
         "pending": pending,
-        "summary": {
-            "total_offers": summary.total_offers,
-            "lowest_pix": summary.lowest_pix,
-            "median_pix": summary.median_pix,
-        },
+        "summary": asdict(summary),
+        "telemetry": [],
+        "dorks": [],
     }
