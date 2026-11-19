@@ -44,30 +44,47 @@ async def _public_dns(url: str) -> bool:
         return False
 
 
-async def google_discover(query: str, limit: int = 8) -> tuple[list[dict], str | None]:
-    key = os.getenv("GOOGLE_SEARCH_API_KEY", "").strip()
-    cx = os.getenv("GOOGLE_SEARCH_ENGINE_ID", "").strip()
-    if not key or not cx:
-        return [], "Google Programmable Search não configurado (GOOGLE_SEARCH_API_KEY e GOOGLE_SEARCH_ENGINE_ID)."
+async def google_discover(query: str, limit: int = 8, browser_manager=None) -> tuple[list[dict], str | None]:
+    """Use Playwright Chromium for Google discovery; no Bing/API fallback."""
+    from bs4 import BeautifulSoup
+    from urllib.parse import quote_plus, parse_qs, unquote
+
+    if browser_manager is None:
+        return [], "Navegador Chromium não configurado."
+    search_url = "https://www.google.com/search?q=" + quote_plus(query) + "&num=" + str(min(limit, 10))
     try:
-        async with httpx.AsyncClient(timeout=12.0, follow_redirects=False) as client:
-            response = await client.get(
-                "https://www.googleapis.com/customsearch/v1",
-                params={"key": key, "cx": cx, "q": query, "num": min(10, max(1, limit))},
-            )
-            response.raise_for_status()
-            data = response.json()
-        return [
-            {"title": entry.get("title", ""), "url": entry["link"], "snippet": entry.get("snippet", "")}
-            for entry in data.get("items", [])
-            if isinstance(entry, dict) and isinstance(entry.get("link"), str)
-        ], None
-    except (httpx.HTTPError, ValueError, KeyError) as exc:
-        return [], f"Falha na consulta ao Google: {type(exc).__name__}"
+        final_url, html = await browser_manager.render_page_html(search_url, wait_ms=600)
+        if urlsplit(final_url).hostname not in {"www.google.com", "google.com"}:
+            return [], "Google redirecionou a navegação; pesquisa não confirmada."
+        soup = BeautifulSoup(html, "lxml")
+        text = soup.get_text(" ", strip=True).lower()
+        if any(term in text for term in ("unusual traffic", "tráfego incomum", "não sou um robô", "verify you are human")):
+            return [], "Google solicitou verificação humana; não será contornada."
+        found = []
+        seen = set()
+        for heading in soup.select("h3"):
+            anchor = heading.find_parent("a", href=True)
+            if anchor is None:
+                continue
+            href = anchor["href"]
+            if href.startswith("/url?"):
+                href = parse_qs(urlsplit(href).query).get("q", [""])[0]
+            if not href.startswith(("https://", "http://")):
+                continue
+            host = urlsplit(href).hostname or ""
+            if host.endswith((".google.com", ".google.com.br")) or host in seen:
+                continue
+            seen.add(host + href)
+            found.append({"title": heading.get_text(" ", strip=True), "url": href, "snippet": ""})
+            if len(found) >= limit:
+                break
+        return found, None if found else "Nenhum link extraído do Google; layout ou acesso pode ter mudado."
+    except Exception as exc:
+        return [], f"Falha na navegação Chromium: {type(exc).__name__}"
 
 
-async def verified_google_search(query: str, inspector, comparator, limit: int = 8) -> dict:
-    candidates, discovery_error = await google_discover(query, limit)
+async def verified_google_search(query: str, inspector, comparator, limit: int = 8, browser_manager=None) -> dict:
+    candidates, discovery_error = await google_discover(query, limit, browser_manager)
     pending = []
     raw = []
     visited = set()
